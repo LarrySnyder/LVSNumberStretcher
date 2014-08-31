@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>IDESourceControlProjectFavoriteDictionaryKey</key>
+	<false/>
+	<key>IDESourceControlProjectIdentifier</key>
+	<string>0E56317E-7A27-45B8-8D97-8F932C8B4770</string>
+	<key>IDESourceControlProjectName</key>
+	<string>LVSNumberStretcher</string>
+	<key>IDESourceControlProjectOriginsDictionary</key>
+	<dict>
+		<key>6733D265-A14A-4101-A570-6AD1106636DA</key>
+		<string>https://github.com/LarrySnyder/LVSNumberStretcher.git</string>
+	</dict>
+	<key>IDESourceControlProjectPath</key>
+	<string>LVSNumberStretcher.xcodeproj/project.xcworkspace</string>
+	<key>IDESourceControlProjectRelativeInstallPathDictionary</key>
+	<dict>
+		<key>6733D265-A14A-4101-A570-6AD1106636DA</key>
+		<string>../..</string>
+	</dict>
+	<key>IDESourceControlProjectURL</key>
+	<string>https://github.com/LarrySnyder/LVSNumberStretcher.git</string>
+	<key>IDESourceControlProjectVersion</key>
+	<integer>110</integer>
+	<key>IDESourceControlProjectWCCIdentifier</key>
+	<string>6733D265-A14A-4101-A570-6AD1106636DA</string>
+	<key>IDESourceControlProjectWCConfigurations</key>
+	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>6733D265-A14A-4101-A570-6AD1106636DA</string>
+			<key>IDESourceControlWCCName</key>
+			<string>LVSNumberStretcher</string>
+		</dict>
+	</array>
+</dict>
+</plist>
