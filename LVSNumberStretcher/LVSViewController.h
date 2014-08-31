@@ -10,4 +10,6 @@
 
 @interface LVSViewController : UIViewController
 
+@property (nonatomic, weak) IBOutlet UIView *numberStretcherPlaceholder;
+
 @end

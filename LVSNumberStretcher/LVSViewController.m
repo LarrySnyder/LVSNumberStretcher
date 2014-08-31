@@ -7,8 +7,12 @@
 //
 
 #import "LVSViewController.h"
+#import "LVSNumberStretcher.h"
 
 @interface LVSViewController ()
+{
+    LVSNumberStretcher *_numberStretcher;
+}
 
 @end
 
@@ -17,7 +21,10 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-	// Do any additional setup after loading the view, typically from a nib.
+
+    // Create numberStretcher and add it as subview of numberStretcherPlaceholder
+    _numberStretcher = [[LVSNumberStretcher alloc] initWithFrame:self.numberStretcherPlaceholder.bounds];
+    [self.numberStretcherPlaceholder addSubview:_numberStretcher];
 }
 
 - (void)didReceiveMemoryWarning

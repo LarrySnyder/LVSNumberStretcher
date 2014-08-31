@@ -21,6 +21,7 @@
 		46FBA56419B382CC008C8BA5 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 46FBA54619B382CC008C8BA5 /* UIKit.framework */; };
 		46FBA56C19B382CC008C8BA5 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 46FBA56A19B382CC008C8BA5 /* InfoPlist.strings */; };
 		46FBA56E19B382CC008C8BA5 /* LVSNumberStretcherTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 46FBA56D19B382CC008C8BA5 /* LVSNumberStretcherTests.m */; };
+		46FBA57919B38332008C8BA5 /* LVSNumberStretcher.m in Sources */ = {isa = PBXBuildFile; fileRef = 46FBA57819B38332008C8BA5 /* LVSNumberStretcher.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -53,6 +54,8 @@
 		46FBA56919B382CC008C8BA5 /* LVSNumberStretcherTests-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "LVSNumberStretcherTests-Info.plist"; sourceTree = "<group>"; };
 		46FBA56B19B382CC008C8BA5 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		46FBA56D19B382CC008C8BA5 /* LVSNumberStretcherTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = LVSNumberStretcherTests.m; sourceTree = "<group>"; };
+		46FBA57719B38332008C8BA5 /* LVSNumberStretcher.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LVSNumberStretcher.h; sourceTree = "<group>"; };
+		46FBA57819B38332008C8BA5 /* LVSNumberStretcher.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LVSNumberStretcher.m; sourceTree = "<group>"; usesTabs = 1; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -112,6 +115,8 @@
 		46FBA54819B382CC008C8BA5 /* LVSNumberStretcher */ = {
 			isa = PBXGroup;
 			children = (
+				46FBA57719B38332008C8BA5 /* LVSNumberStretcher.h */,
+				46FBA57819B38332008C8BA5 /* LVSNumberStretcher.m */,
 				46FBA55119B382CC008C8BA5 /* LVSAppDelegate.h */,
 				46FBA55219B382CC008C8BA5 /* LVSAppDelegate.m */,
 				46FBA55419B382CC008C8BA5 /* Main.storyboard */,
@@ -251,6 +256,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				46FBA55319B382CC008C8BA5 /* LVSAppDelegate.m in Sources */,
+				46FBA57919B38332008C8BA5 /* LVSNumberStretcher.m in Sources */,
 				46FBA55919B382CC008C8BA5 /* LVSViewController.m in Sources */,
 				46FBA54F19B382CC008C8BA5 /* main.m in Sources */,
 			);
