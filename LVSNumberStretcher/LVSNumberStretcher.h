@@ -10,7 +10,14 @@
 
 /* --- LVSNumberStretcher --- */
 
-@interface LVSNumberStretcher : UITextField
+@interface LVSNumberStretcher : UIControl <UITextFieldDelegate>
+
+#pragma mark - Text field
+
+/*
+ Pointer to the text field that is the main visible component of hte number stretcher
+ */
+//@property (nonatomic, strong) UITextField *textField;
 
 #pragma mark - Value
 
@@ -49,6 +56,24 @@
 @property (nonatomic, assign) int numDigits;
 
 #pragma mark - Behavior
+
+/*
+ Maximum distance -- if stretcher is stretched past this distance, 
+ value will increment at maximumIncrementSpeed (measured in points).
+ Defaults to 150
+ */
+@property (nonatomic, assign) CGFloat maximumDistance;
+
+/*
+ Minimum speed at which stretcher value changes (measured in # increments per second).
+ Defaults to 1 */
+@property (nonatomic, assign) CGFloat minimumIncrementSpeed;
+
+/*
+ Speed at which stretcher value changes when stretched past maximumDistance
+ (measured in # increments per second). Defaults to 3
+ */
+@property (nonatomic, assign) CGFloat maximumIncrementSpeed;
 
 /*
  Indicates whether changes in the value of the stretcher generate continuous
