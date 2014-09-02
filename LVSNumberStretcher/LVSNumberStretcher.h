@@ -10,7 +10,7 @@
 
 /* --- LVSNumberStretcher --- */
 
-@interface LVSNumberStretcher : UIControl <UITextFieldDelegate>
+@interface LVSNumberStretcher : UIControl <UITextFieldDelegate, UIGestureRecognizerDelegate>
 
 #pragma mark - Text field
 
@@ -80,18 +80,5 @@
  update events. Defaults to YES
  */
 @property (nonatomic, assign, getter = isContinuous) BOOL continuous;
-
-@end
-
-
-/* --- LVSStretchGestureRecognizer --- */
-
-@interface LVSStretchGestureRecognizer : UIPanGestureRecognizer
-
-/*
- Vertical distance from touch location to control. 
- + indicates touch is above control, - indicates touch is below control
- */
-@property (nonatomic, assign) CGFloat touchDistance;
 
 @end

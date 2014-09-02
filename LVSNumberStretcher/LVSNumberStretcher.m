@@ -16,11 +16,12 @@
 {
 //	LVSStretchGestureRecognizer *_stretchRecognizer;
 	UIPanGestureRecognizer *_panRecognizer;
+	UITapGestureRecognizer *_doubleTapRecognizer;
 	UITextField *_textField;
 	BOOL _incrementing;
-//	int _currentIncrementDirection;		// 1 = increasing, 0 = not incrementing, -1 = decreasing
 	CGFloat _currentIncrementSpeed;		// increments per second (+ = increasing, - = decreasing)
 	BOOL _nextIncrementScheduled;		// has next increment been scheduled?
+	BOOL _editing;
 }
 
 - (id)initWithFrame:(CGRect)frame
@@ -30,6 +31,20 @@
 		// Create text field
 		_textField = [[UITextField alloc] initWithFrame:CGRectMake(self.bounds.size.width / 3, self.bounds.size.height /3, self.bounds.size.width / 3, self.bounds.size.height /3)];
 		[self addSubview:_textField];
+		
+		// Set up text field
+		_textField.keyboardType = UIKeyboardTypeDecimalPad;
+		_textField.enablesReturnKeyAutomatically = YES;
+		_textField.delegate = self;
+		
+		// Custom toolbar for keyboard (see http://stackoverflow.com/a/11382326/3453768)
+		UIToolbar *numberToolbar = [[UIToolbar alloc] initWithFrame:CGRectMake(0, 0, [UIScreen mainScreen].bounds.size.width, 44)];
+		numberToolbar.items = [NSArray arrayWithObjects:
+//							   [[UIBarButtonItem alloc] initWithTitle:@"Cancel" style:UIBarButtonItemStylePlain target:self action:@selector(cancelNumberPad)],
+							   [[UIBarButtonItem alloc] initWithBarButtonSystemItem:UIBarButtonSystemItemFlexibleSpace target:nil action:nil],
+							   [[UIBarButtonItem alloc] initWithTitle:@"Done" style:UIBarButtonItemStyleDone target:self action:@selector(doneWithNumberPad)],
+							   nil];
+		_textField.inputAccessoryView = numberToolbar;
 		
 		// Default property values
 		self.minimumValue = -DBL_MAX; // 0.0;
@@ -47,21 +62,28 @@
 		_currentIncrementSpeed = 0.0;
 		_nextIncrementScheduled = NO;
 		
-		// Initial appearance
+		// Initial editing settings
+		_editing = NO;
+		
+		// Appearance
 		self.backgroundColor = [UIColor lightGrayColor];
 		_textField.textColor = [UIColor blueColor];
 		_textField.backgroundColor = [UIColor whiteColor];
-																	   
-		// Enable
-		_textField.enabled = YES;
-		
-		// Gesture recognizer
+								
+		// Pan gesture recognizer
 		_panRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handleStretch:)];
 		_panRecognizer.minimumNumberOfTouches = 1;
 		_panRecognizer.maximumNumberOfTouches = 1;
 		[self addGestureRecognizer:_panRecognizer];
-//		_stretchRecognizer = [[LVSStretchGestureRecognizer alloc] initWithTarget:self action:@selector(handleStretch:)];
-//		[self addGestureRecognizer:_stretchRecognizer];
+		
+		// Double-tap recognizer
+		// basically uses the method here: http://stackoverflow.com/questions/20420784/double-tap-uitextview
+		_doubleTapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleDoubleTap:)];
+		_doubleTapRecognizer.numberOfTapsRequired = 2;
+		_doubleTapRecognizer.numberOfTouchesRequired = 1;
+		_doubleTapRecognizer.delaysTouchesBegan = YES;
+		_doubleTapRecognizer.delegate = self;
+		[self addGestureRecognizer:_doubleTapRecognizer];
 	}
     return self;
 }
@@ -91,7 +113,7 @@
 
 #pragma mark - Stretching
 
-- (void)handleStretch:(LVSStretchGestureRecognizer *)gesture
+- (void)handleStretch:(UIPanGestureRecognizer *)gesture
 {
 	if ((gesture.state == UIGestureRecognizerStateBegan) ||
 		(gesture.state == UIGestureRecognizerStateChanged))
@@ -170,56 +192,57 @@
 	}
 }
 
+#pragma mark - Text field editing
+
+- (void)handleDoubleTap:(UITapGestureRecognizer *)gesture
+{
+	_editing = YES;
+	[_textField becomeFirstResponder];
+}
+
+- (BOOL)canBecomeFirstResponder
+{
+	return _editing;
+}
+
+/*- (void)cancelNumberPad
+{
+	_editing = NO;
+	[_textField resignFirstResponder];
+}*/
+
+- (void)doneWithNumberPad
+{
+	_editing = NO;
+	[_textField resignFirstResponder];
+}
+
 #pragma mark - UITextFieldDelegate
 
 - (BOOL)textFieldShouldBeginEditing:(UITextField *)textField
 {
-	return NO;
+	return _editing;
+}
+
+/*- (void)textFieldDidBeginEditing:(UITextField *)textField
+{
+	[_textField selectAll:self];
+}*/
+
+- (BOOL)textFieldShouldReturn:(UITextField *)textField
+{
+	_editing = NO;
+	[textField resignFirstResponder];
+	
+	return YES;
+}
+
+#pragma mark - UIGestureRecognizerDelegate
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer
+{
+	return YES;
 }
 
 @end
 
-
-/* --- LVSStretchGestureRecognizer --- */
-
-@implementation LVSStretchGestureRecognizer
-
-- (id)initWithTarget:(id)target action:(SEL)action
-{
-    self = [super initWithTarget:target action:action];
-    if (self) {
-        self.maximumNumberOfTouches = 1;
-        self.minimumNumberOfTouches = 1;
-    }
-    return self;
-}
-
-- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
-{
-	[super touchesBegan:touches withEvent:event];
-	[self updateTouchDistanceWithTouches:touches];
-}
-
-- (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
-{
-	[super touchesMoved:touches withEvent:event];
-	[self updateTouchDistanceWithTouches:touches];
-}
-
-- (void)updateTouchDistanceWithTouches:(NSSet *)touches
-{
-	UITouch *touch = [touches anyObject];
-	CGPoint touchPoint = [touch locationInView:self.view];
-	
-	// TODO: allow user to specify "up" direction and make everything relative to that
-	
-	// Calculate distance to nearest (top/bottom) edge
-	if (touchPoint.y < CGRectGetMinY(self.view.bounds))
-		self.touchDistance = touchPoint.y - CGRectGetMinY(self.view.bounds);
-	else if (touchPoint.y > CGRectGetMaxY(self.view.bounds))
-		self.touchDistance = touchPoint.y - CGRectGetMaxY(self.view.bounds);
-	else
-		self.touchDistance = 0.0;
-}
-
-@end
