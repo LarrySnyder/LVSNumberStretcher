@@ -22,6 +22,8 @@
 	CGFloat _currentIncrementSpeed;		// increments per second (+ = increasing, - = decreasing)
 	BOOL _nextIncrementScheduled;		// has next increment been scheduled?
 	BOOL _editing;
+	UIView *_circularFrame;
+	CGRect _originalFrame;
 }
 
 - (id)initWithFrame:(CGRect)frame
@@ -29,12 +31,13 @@
     self = [super initWithFrame:frame];
     if (self) {
 		// Create text field
-		_textField = [[UITextField alloc] initWithFrame:CGRectMake(self.bounds.size.width / 3, self.bounds.size.height /3, self.bounds.size.width / 3, self.bounds.size.height /3)];
+		_textField = [[UITextField alloc] initWithFrame:CGRectInset(self.frame, 5, 5)];
 		[self addSubview:_textField];
 		
 		// Set up text field
 		_textField.keyboardType = UIKeyboardTypeDecimalPad;
 		_textField.enablesReturnKeyAutomatically = YES;
+		_textField.textAlignment = NSTextAlignmentCenter;
 		_textField.delegate = self;
 		
 		// Custom toolbar for keyboard (see http://stackoverflow.com/a/11382326/3453768)
@@ -69,6 +72,7 @@
 		self.backgroundColor = [UIColor lightGrayColor];
 		_textField.textColor = [UIColor blueColor];
 		_textField.backgroundColor = [UIColor whiteColor];
+		_originalFrame = self.frame;
 								
 		// Pan gesture recognizer
 		_panRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handleStretch:)];
@@ -163,6 +167,9 @@
 			_incrementing = NO;
 			_nextIncrementScheduled = NO;
 		}
+		
+		// Update frames
+		[self updateFramesForTouchPoint:touchPoint];
 	}
 	else if ((gesture.state == UIGestureRecognizerStateEnded) ||
 			 (gesture.state = UIGestureRecognizerStateCancelled) ||
@@ -171,7 +178,20 @@
 		// Gesture ended -- turn off incrementing
 		_incrementing = NO;
 		_nextIncrementScheduled = NO;
+		
+		// Reset frame
+		[self updateFramesForTouchPoint:_originalFrame.origin];
 	}
+	
+/*	if (gesture.state == UIGestureRecognizerStateBegan)
+		[self animateCircularFrame];*/
+	
+	// Redraw if gesture began or ended
+	if ((gesture.state == UIGestureRecognizerStateBegan) ||
+		(gesture.state == UIGestureRecognizerStateEnded) ||
+		(gesture.state == UIGestureRecognizerStateCancelled) ||
+		(gesture.state == UIGestureRecognizerStateFailed))
+		[self setNeedsDisplay];
 }
 
 - (void)incrementValue
@@ -190,6 +210,71 @@
 				   withObject:nil
 				   afterDelay:(1.0 / fabs(_currentIncrementSpeed))];
 	}
+}
+
+#pragma mark - Drawing and Animation
+
+/* Updates frames of self and _textField in response to stretch to touchPoint.
+	Set touchPoint to any point in _originalFrame to restore to original frames. */
+- (void)updateFramesForTouchPoint:(CGPoint)touchPoint;
+{
+	// Remember original frame for _textField, in superview's coordinates
+	CGRect textFrame = [self.superview convertRect:_textField.frame fromView:self];
+	
+	// self frame
+	CGRect pointRect = CGRectMake(touchPoint.x, touchPoint.y, 0.0, 0.0);
+	self.frame = CGRectUnion(pointRect, _originalFrame);
+	
+	// _textField frame
+	_textField.frame = [self convertRect:textFrame fromView:self.superview];
+}
+
+- (void)drawRect:(CGRect)rect
+{
+	// Only draw circular frame if incrementing
+	if (_incrementing)
+	{
+		// Get CGContextRef
+		CGContextRef context = UIGraphicsGetCurrentContext();
+		UIGraphicsPushContext(context);
+		
+		// Set drawing properties
+		CGFloat lineWidth = 2.0;
+		CGContextSetLineWidth(context, lineWidth);
+		[[UIColor blackColor] setStroke];
+		
+		// Get slightly smaller rect to avoid circle being squished at edges
+		CGRect slightlySmallerRect = CGRectInset(rect, lineWidth/2.0, lineWidth/2.0);
+		
+		// Draw circle
+		CGContextAddEllipseInRect(context, slightlySmallerRect);
+		CGContextDrawPath(context, kCGPathStroke);
+		
+		UIGraphicsPopContext();
+	}
+}
+
+- (void)animateCircularFrame
+{
+/*	// Create circular frame and add as subview to self
+	_circularFrame = [[UIView alloc] initWithFrame:CGRectZero];
+	[self addSubview:_circularFrame];
+	
+	// Set initial animation state
+	_circularFrame.frame = CGRectInset(self.bounds, self.bounds.size.width / 2.0, self.bounds.size.height / 2.0);
+	_circularFrame.alpha = 0.0;
+	
+	// Animate appearance*/
+	self.alpha = 0.0;
+	[UIView animateWithDuration:1.0
+						  delay:0.0
+						options:0
+					 animations:^{
+						 self.alpha = 1.0;
+					 }
+					 completion:nil];
+	
+	
 }
 
 #pragma mark - Text field editing
