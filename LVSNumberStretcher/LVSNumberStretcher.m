@@ -17,7 +17,7 @@
 //	LVSStretchGestureRecognizer *_stretchRecognizer;
 	UIPanGestureRecognizer *_panRecognizer;
 	UITapGestureRecognizer *_doubleTapRecognizer;
-	UITextField *_textField;
+//	UITextField *_textField;
 	BOOL _incrementing;
 	CGFloat _currentIncrementSpeed;		// increments per second (+ = increasing, - = decreasing)
 	BOOL _nextIncrementScheduled;		// has next increment been scheduled?
@@ -71,9 +71,9 @@
 		_editing = NO;
 		
 		// Appearance
-		self.backgroundColor = [UIColor lightGrayColor];
+		self.backgroundColor = [UIColor clearColor];
 		_textField.textColor = [UIColor blueColor];
-		_textField.backgroundColor = [UIColor whiteColor];
+		_textField.backgroundColor = [UIColor clearColor];
 		_originalFrame = self.frame;
 								
 		// Pan gesture recognizer
@@ -129,6 +129,7 @@
 		
 		// TODO: allow user to specify "up" direction and make everything relative to that
 		
+		// TODO: why is it faster when we pull down than up?
 		// Calculate distance to nearest (top/bottom) edge of original frame and increment speed
 		CGFloat touchDistance; // +/-
 		if (_touchPoint.y < CGRectGetMinY(_originalFrame))

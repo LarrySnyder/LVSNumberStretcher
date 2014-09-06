@@ -25,6 +25,9 @@
     // Create numberStretcher and add it as subview of numberStretcherPlaceholder
     _numberStretcher = [[LVSNumberStretcher alloc] initWithFrame:self.numberStretcherPlaceholder.bounds];
     [self.numberStretcherPlaceholder addSubview:_numberStretcher];
+    
+    // Set background of placeholder to clear
+    self.numberStretcherPlaceholder.backgroundColor = [UIColor clearColor];
 }
 
 - (void)didReceiveMemoryWarning

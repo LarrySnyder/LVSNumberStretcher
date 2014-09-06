@@ -17,7 +17,7 @@
 /*
  Pointer to the text field that is the main visible component of hte number stretcher
  */
-//@property (nonatomic, strong) UITextField *textField;
+@property (nonatomic, strong) UITextField *textField;
 
 #pragma mark - Value
 
