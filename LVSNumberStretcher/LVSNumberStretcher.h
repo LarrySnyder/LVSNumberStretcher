@@ -61,6 +61,11 @@
  */
 @property (nonatomic, assign) CGFloat stretcherWidth;
 
+/*
+ Line width for stretcher. Defaults to 1.0
+ */
+@property (nonatomic, assign) CGFloat lineWidth;
+
 #pragma mark - Behavior
 
 /*

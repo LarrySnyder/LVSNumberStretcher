@@ -32,7 +32,7 @@
     self = [super initWithFrame:frame];
     if (self) {
 		// Create text field
-		_textField = [[UITextField alloc] initWithFrame:CGRectInset(self.frame, 5, 5)];
+		_textField = [[UITextField alloc] initWithFrame:CGRectInset(self.bounds, 5, 5)];
 		[self addSubview:_textField];
 		
 		// Set up text field
@@ -57,6 +57,7 @@
 		self.increment = 1;
 		self.numDigits = 1;
 		self.stretcherWidth = M_PI / 4.0;
+		self.lineWidth = 1.0;
 		self.maximumDistance = 150.0;
 		self.minimumIncrementSpeed = 1.0;
 		self.maximumIncrementSpeed = 10.0;
@@ -129,7 +130,6 @@
 		
 		// TODO: allow user to specify "up" direction and make everything relative to that
 		
-		// TODO: why is it faster when we pull down than up?
 		// Calculate distance to nearest (top/bottom) edge of original frame and increment speed
 		CGFloat touchDistance; // +/-
 		if (_touchPoint.y < CGRectGetMinY(_originalFrame))
@@ -144,7 +144,7 @@
 			// Touch is below frame: touchDistance and _currentIncrementSpeed will be <0
 			touchDistance = CGRectGetMaxY(_originalFrame) - _touchPoint.y;
 			_currentIncrementSpeed = self.maximumIncrementSpeed * touchDistance / self.maximumDistance;
-			_currentIncrementSpeed = MIN(-self.maximumIncrementSpeed, MAX(_currentIncrementSpeed, -self.minimumIncrementSpeed));
+			_currentIncrementSpeed = MAX(-self.maximumIncrementSpeed, MIN(_currentIncrementSpeed, -self.minimumIncrementSpeed));
 		}
 		else
 		{
@@ -152,22 +152,10 @@
 			touchDistance = 0.0;
 			_currentIncrementSpeed = 0.0;
 		}
-
-/*		// Calculate increment speed
-		_currentIncrementSpeed = self.maximumIncrementSpeed * touchDistance / self.maximumDistance;
-		// There must be a more compact way to do this!!
-		if (_currentIncrementSpeed > self.maximumIncrementSpeed)
-			_currentIncrementSpeed = self.maximumIncrementSpeed;
-		else if (_currentIncrementSpeed < -self.maximumIncrementSpeed)
-			_currentIncrementSpeed = -self.maximumIncrementSpeed;
-		else if (fabs(_currentIncrementSpeed) < self.minimumIncrementSpeed)
-		{
-			if (_currentIncrementSpeed > 0)
-				_currentIncrementSpeed = self.minimumIncrementSpeed;
-			else
-				_currentIncrementSpeed = -self.minimumIncrementSpeed;
-		}*/
 		
+		// Set _incrementing (even if touch is within frame)
+		_incrementing = YES;
+
 		// Schedule next increment and set incrementing flag
 		if (fabs(_currentIncrementSpeed) > 0.001)
 		{
@@ -178,13 +166,9 @@
 						   afterDelay:(1.0 / fabs(_currentIncrementSpeed))];
 				_nextIncrementScheduled = YES;
 			}
-			_incrementing = YES;
 		}
 		else
-		{
-			_incrementing = NO;
 			_nextIncrementScheduled = NO;
-		}
 		
 		// Update frames
 		[self updateFramesForTouchPoint:_touchPoint];
@@ -259,16 +243,15 @@
 		UIGraphicsPushContext(context);
 		
 		// Set drawing properties
-		CGFloat lineWidth = 2.0;
-		CGContextSetLineWidth(context, lineWidth);
+		CGContextSetLineWidth(context, self.lineWidth);
 		[[UIColor blackColor] setStroke];
 		
 		// Convert _originalFrame to own coordinates (it's currently in superview's coordinates)
-		// and make slightly smaller to avoid circle being squished at edges
+		// and make slightly smaller to avoid ellipse being squished at edges
 		CGRect localOriginalFrame = [self convertRect:_originalFrame fromView:self.superview];
-		CGRect slightlySmallerRect = CGRectInset(localOriginalFrame, lineWidth/2.0, lineWidth/2.0);
+		CGRect slightlySmallerRect = CGRectInset(localOriginalFrame, self.lineWidth/2.0, self.lineWidth/2.0);
 	
-		// Draw circle
+		// Draw ellipse
 		CGContextAddEllipseInRect(context, slightlySmallerRect);
 		CGContextDrawPath(context, kCGPathStroke);
 		
@@ -282,8 +265,38 @@
 			CGPoint tip = CGPointMake(CGRectGetMidX(localOriginalFrame), localTouchPoint.y);
 			CGContextMoveToPoint(context, tip.x, tip.y);
 			
-			// Calculate first point where stretcher intersects circle
-			CGFloat r = localOriginalFrame.size.width / 2.0;
+			// Calculate angles where stretcher intersects ellipse
+			CGFloat angle1, angle2;
+			if (localTouchPoint.y < CGRectGetMinY(localOriginalFrame))
+				angle1 = M_PI_2 + self.stretcherWidth / 2.0;
+			else
+				angle1 = -M_PI_2 + self.stretcherWidth / 2.0;
+			angle2 = angle1 - self.stretcherWidth;
+			
+			// Calculate corresponding radii (http://en.wikipedia.org/wiki/Ellipse#Polar_form_relative_to_center)
+			CGFloat a = localOriginalFrame.size.width / 2.0;
+			CGFloat b = localOriginalFrame.size.height / 2.0;
+			CGFloat r1 = a * b / sqrtf(powf(b * cosf(angle1), 2.0) + powf(a * sinf(angle1), 2.0));
+			CGFloat r2 = a * b / sqrtf(powf(b * cosf(angle2), 2.0) + powf(a * sinf(angle2), 2.0));
+			
+			// Convert polar to rectangular and move origin to center of localOriginalFrame
+			CGFloat x1 = r1 * cosf(angle1) + CGRectGetMidX(localOriginalFrame);
+			CGFloat y1 = -r1 * sinf(angle1) + CGRectGetMidY(localOriginalFrame);
+			CGFloat x2 = r2 * cosf(angle2) + CGRectGetMidX(localOriginalFrame);
+			CGFloat y2 = -r2 * sinf(angle2) + CGRectGetMidY(localOriginalFrame);
+			
+			// Set intersection points of stretcher with ellipse
+			CGPoint intersectPoint1 = CGPointMake(x1, y1);
+			CGPoint intersectPoint2 = CGPointMake(x2, y2);
+
+/*			// Calculate points where stregher intersects ellipse
+			CGPoint intersectPoint1 = CGPointMake(a * cosf(t1) + CGRectGetMidX(localOriginalFrame),
+												  b * sinf(t1) + CGRectGetMidY(localOriginalFrame));
+			CGPoint intersectPoint2 = CGPointMake(a * cosf(t2) + CGRectGetMidX(localOriginalFrame),
+												  b * sinf(t2) + CGRectGetMidY(localOriginalFrame));*/
+			
+			
+/*			CGFloat r = localOriginalFrame.size.width / 2.0;
 			CGPoint intersectPoint1;
 			if (localTouchPoint.y < CGRectGetMinY(localOriginalFrame))
 				intersectPoint1 = CGPointMake(CGRectGetMidX(localOriginalFrame) - r * sinf(self.stretcherWidth/2.0),
@@ -294,7 +307,7 @@
 				
 			// Calculate second point
 			CGPoint intersectPoint2 = CGPointMake(intersectPoint1.x + 2 * r * sinf(self.stretcherWidth/2.0),
-												  intersectPoint1.y);
+												  intersectPoint1.y);*/
 			
 			// Add line to first intersect point
 			CGContextAddLineToPoint(context, intersectPoint1.x, intersectPoint1.y);
