@@ -263,7 +263,7 @@
 		{
 			// Move to point at _touchPoint's y and _originalFrame's x, in own coordinates
 			CGPoint tip = CGPointMake(CGRectGetMidX(localOriginalFrame), localTouchPoint.y);
-			CGContextMoveToPoint(context, tip.x, tip.y);
+	//		CGContextMoveToPoint(context, tip.x, tip.y);
 			
 			// Calculate angles where stretcher intersects ellipse
 			CGFloat angle1, angle2;
@@ -288,40 +288,32 @@
 			// Set intersection points of stretcher with ellipse
 			CGPoint intersectPoint1 = CGPointMake(x1, y1);
 			CGPoint intersectPoint2 = CGPointMake(x2, y2);
-
-/*			// Calculate points where stregher intersects ellipse
-			CGPoint intersectPoint1 = CGPointMake(a * cosf(t1) + CGRectGetMidX(localOriginalFrame),
-												  b * sinf(t1) + CGRectGetMidY(localOriginalFrame));
-			CGPoint intersectPoint2 = CGPointMake(a * cosf(t2) + CGRectGetMidX(localOriginalFrame),
-												  b * sinf(t2) + CGRectGetMidY(localOriginalFrame));*/
 			
+			// Calculate control points for first stretcher curve
+			// Template: (-2.3, 0.4) (-0.5, 1.3) (-0.3, 3.7) (0.0, 8.0)
+			CGFloat xScale = (CGRectGetMidX(localOriginalFrame) - intersectPoint1.x) / (0.0 - (-2.3));
+			CGFloat yScale = (tip.y - intersectPoint1.y) / (8.0 - 0.4);
+			CGPoint controlPoint1 = CGPointMake(xScale * (-0.5 - (-2.3)) + intersectPoint1.x,
+												yScale * (1.3 - 0.4) + intersectPoint1.y);
+			CGPoint controlPoint2 = CGPointMake(xScale * (-0.3 - (-2.3)) + intersectPoint1.x,
+												yScale * (3.7 - 0.4) + intersectPoint1.y);
 			
-/*			CGFloat r = localOriginalFrame.size.width / 2.0;
-			CGPoint intersectPoint1;
-			if (localTouchPoint.y < CGRectGetMinY(localOriginalFrame))
-				intersectPoint1 = CGPointMake(CGRectGetMidX(localOriginalFrame) - r * sinf(self.stretcherWidth/2.0),
-											  CGRectGetMidY(localOriginalFrame) - r * cosf(self.stretcherWidth/2.0));
-			else
-				intersectPoint1 = CGPointMake(CGRectGetMidX(localOriginalFrame) - r * sinf(self.stretcherWidth/2.0),
-											  CGRectGetMidY(localOriginalFrame) + r * cosf(self.stretcherWidth/2.0));
-				
-			// Calculate second point
-			CGPoint intersectPoint2 = CGPointMake(intersectPoint1.x + 2 * r * sinf(self.stretcherWidth/2.0),
-												  intersectPoint1.y);*/
+			// Add first Bezier curve for stretcher
+			CGContextMoveToPoint(context, intersectPoint1.x, intersectPoint1.y);
+			CGContextAddCurveToPoint(context, controlPoint1.x, controlPoint1.y, controlPoint2.x, controlPoint2.y, tip.x, tip.y);
 			
-			// Add line to first intersect point
-			CGContextAddLineToPoint(context, intersectPoint1.x, intersectPoint1.y);
-			CGContextAddLineToPoint(context, intersectPoint2.x, intersectPoint2.y); // TEMP: replace this with an arc
+			// Calculate control points for second stretcher curve
+			// Template: (2.3, 0.4) (0.5, 1.3) (0.3, 3.7) (0.0, 8.0)
+			xScale = (intersectPoint2.x - CGRectGetMidX(localOriginalFrame)) / (2.3 - 0.0);
+			yScale = (tip.y - intersectPoint2.y) / (8.0 - 0.4);
+			controlPoint1 = CGPointMake(xScale * (0.5 - 2.3) + intersectPoint2.x,
+												yScale * (1.3 - 0.4) + intersectPoint2.y);
+			controlPoint2 = CGPointMake(xScale * (0.3 - 2.3) + intersectPoint2.x,
+												yScale * (3.7 - 0.4) + intersectPoint2.y);
 			
-//			CGContextAddArcToPoint(context, intersectPoint1.x, intersectPoint1.y, intersectPoint2.x, intersectPoint2.y, localOriginalFrame.size.width / 2.0);
-			// Add arc to second intersect point
-/*			if (localTouchPoint.y < CGRectGetMinY(localOriginalFrame))
-				CGContextAddArc(context, CGRectGetMidX(localOriginalFrame), CGRectGetMidY(localOriginalFrame),localOriginalFrame.size.width / 2.0, M_PI_4 + self.stretcherWidth / 2.0, M_PI_4 - self.stretcherWidth / 2.0, 1);
-			else
-				CGContextAddArc(context, CGRectGetMidX(localOriginalFrame), CGRectGetMidY(localOriginalFrame),localOriginalFrame.size.width / 2.0, - (M_PI_4 + self.stretcherWidth / 2.0), - (M_PI_4 - self.stretcherWidth / 2.0), 0);*/
-			
-			// Add line back to tip
-			CGContextAddLineToPoint(context, tip.x, tip.y);
+			// Add second Bezier curve for stretcher
+			CGContextMoveToPoint(context, intersectPoint2.x, intersectPoint2.y);
+			CGContextAddCurveToPoint(context, controlPoint1.x, controlPoint1.y, controlPoint2.x, controlPoint2.y, tip.x, tip.y);
 			
 			// Draw path
 			CGContextDrawPath(context, kCGPathStroke);
