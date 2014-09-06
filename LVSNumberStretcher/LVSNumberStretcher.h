@@ -55,6 +55,12 @@
  */
 @property (nonatomic, assign) int numDigits;
 
+/*
+ Angular width (in radians) of stretcher, where it intersects circle around text field.
+ Defaults to pi/4
+ */
+@property (nonatomic, assign) CGFloat stretcherWidth;
+
 #pragma mark - Behavior
 
 /*

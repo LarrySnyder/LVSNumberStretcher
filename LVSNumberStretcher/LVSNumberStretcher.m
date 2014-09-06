@@ -23,7 +23,8 @@
 	BOOL _nextIncrementScheduled;		// has next increment been scheduled?
 	BOOL _editing;
 	UIView *_circularFrame;
-	CGRect _originalFrame;
+	CGRect _originalFrame;				// original frame of control, in superview's coordinates
+	CGPoint _touchPoint;				// point currently being touched during stretch, in superview's coordinates
 }
 
 - (id)initWithFrame:(CGRect)frame
@@ -55,6 +56,7 @@
 		self.value = 0.0;
 		self.increment = 1;
 		self.numDigits = 1;
+		self.stretcherWidth = M_PI / 4.0;
 		self.maximumDistance = 150.0;
 		self.minimumIncrementSpeed = 1.0;
 		self.maximumIncrementSpeed = 10.0;
@@ -122,20 +124,35 @@
 	if ((gesture.state == UIGestureRecognizerStateBegan) ||
 		(gesture.state == UIGestureRecognizerStateChanged))
 	{
-		CGPoint touchPoint = [gesture locationInView:self];
-		CGFloat touchDistance; // +/-
+		// Get touch point in superview's coordinates
+		_touchPoint = [gesture locationInView:self.superview];
 		
 		// TODO: allow user to specify "up" direction and make everything relative to that
 		
-		// Calculate distance to nearest (top/bottom) edge
-		if (touchPoint.y < CGRectGetMinY(self.bounds))
-			touchDistance = CGRectGetMinY(self.bounds) - touchPoint.y;
-		else if (touchPoint.y > CGRectGetMaxY(self.bounds))
-			touchDistance = CGRectGetMaxY(self.bounds) - touchPoint.y;
+		// Calculate distance to nearest (top/bottom) edge of original frame and increment speed
+		CGFloat touchDistance; // +/-
+		if (_touchPoint.y < CGRectGetMinY(_originalFrame))
+		{
+			// Touch is above frame: touchDistance and _currentIncrementSpeed will be >0
+			touchDistance = CGRectGetMinY(_originalFrame) - _touchPoint.y;
+			_currentIncrementSpeed = self.maximumIncrementSpeed * touchDistance / self.maximumDistance;
+			_currentIncrementSpeed = MIN(self.maximumIncrementSpeed, MAX(_currentIncrementSpeed, self.minimumIncrementSpeed));
+		}
+		else if (_touchPoint.y > CGRectGetMaxY(_originalFrame))
+		{
+			// Touch is below frame: touchDistance and _currentIncrementSpeed will be <0
+			touchDistance = CGRectGetMaxY(_originalFrame) - _touchPoint.y;
+			_currentIncrementSpeed = self.maximumIncrementSpeed * touchDistance / self.maximumDistance;
+			_currentIncrementSpeed = MIN(-self.maximumIncrementSpeed, MAX(_currentIncrementSpeed, -self.minimumIncrementSpeed));
+		}
 		else
+		{
+			// Touch is inside frame: touchDistance and _currentIncrementSpeed will be =0
 			touchDistance = 0.0;
+			_currentIncrementSpeed = 0.0;
+		}
 
-		// Calculate increment speed
+/*		// Calculate increment speed
 		_currentIncrementSpeed = self.maximumIncrementSpeed * touchDistance / self.maximumDistance;
 		// There must be a more compact way to do this!!
 		if (_currentIncrementSpeed > self.maximumIncrementSpeed)
@@ -148,7 +165,7 @@
 				_currentIncrementSpeed = self.minimumIncrementSpeed;
 			else
 				_currentIncrementSpeed = -self.minimumIncrementSpeed;
-		}
+		}*/
 		
 		// Schedule next increment and set incrementing flag
 		if (fabs(_currentIncrementSpeed) > 0.001)
@@ -169,7 +186,8 @@
 		}
 		
 		// Update frames
-		[self updateFramesForTouchPoint:touchPoint];
+		[self updateFramesForTouchPoint:_touchPoint];
+		[self setNeedsDisplay];
 	}
 	else if ((gesture.state == UIGestureRecognizerStateEnded) ||
 			 (gesture.state = UIGestureRecognizerStateCancelled) ||
@@ -215,6 +233,7 @@
 #pragma mark - Drawing and Animation
 
 /* Updates frames of self and _textField in response to stretch to touchPoint.
+	touchPoint must be in superview's coordinates.
 	Set touchPoint to any point in _originalFrame to restore to original frames. */
 - (void)updateFramesForTouchPoint:(CGPoint)touchPoint;
 {
@@ -222,7 +241,7 @@
 	CGRect textFrame = [self.superview convertRect:_textField.frame fromView:self];
 	
 	// self frame
-	CGRect pointRect = CGRectMake(touchPoint.x, touchPoint.y, 0.0, 0.0);
+	CGRect pointRect = CGRectMake(CGRectGetMidX(_originalFrame), touchPoint.y, 0.0, 0.0);
 	self.frame = CGRectUnion(pointRect, _originalFrame);
 	
 	// _textField frame
@@ -231,7 +250,7 @@
 
 - (void)drawRect:(CGRect)rect
 {
-	// Only draw circular frame if incrementing
+	// Only draw stretcher if incrementing
 	if (_incrementing)
 	{
 		// Get CGContextRef
@@ -243,12 +262,56 @@
 		CGContextSetLineWidth(context, lineWidth);
 		[[UIColor blackColor] setStroke];
 		
-		// Get slightly smaller rect to avoid circle being squished at edges
-		CGRect slightlySmallerRect = CGRectInset(rect, lineWidth/2.0, lineWidth/2.0);
-		
+		// Convert _originalFrame to own coordinates (it's currently in superview's coordinates)
+		// and make slightly smaller to avoid circle being squished at edges
+		CGRect localOriginalFrame = [self convertRect:_originalFrame fromView:self.superview];
+		CGRect slightlySmallerRect = CGRectInset(localOriginalFrame, lineWidth/2.0, lineWidth/2.0);
+	
 		// Draw circle
 		CGContextAddEllipseInRect(context, slightlySmallerRect);
 		CGContextDrawPath(context, kCGPathStroke);
+		
+		// Convert _touchPoint to own coordinates (it's currently in superview's coordinates)
+		CGPoint localTouchPoint = [self convertPoint:_touchPoint fromView:self.superview];
+
+		// Draw stretcher if _touchPoint is outside of _originalFrame
+		if (!CGRectContainsPoint(localOriginalFrame, localTouchPoint))
+		{
+			// Move to point at _touchPoint's y and _originalFrame's x, in own coordinates
+			CGPoint tip = CGPointMake(CGRectGetMidX(localOriginalFrame), localTouchPoint.y);
+			CGContextMoveToPoint(context, tip.x, tip.y);
+			
+			// Calculate first point where stretcher intersects circle
+			CGFloat r = localOriginalFrame.size.width / 2.0;
+			CGPoint intersectPoint1;
+			if (localTouchPoint.y < CGRectGetMinY(localOriginalFrame))
+				intersectPoint1 = CGPointMake(CGRectGetMidX(localOriginalFrame) - r * sinf(self.stretcherWidth/2.0),
+											  CGRectGetMidY(localOriginalFrame) - r * cosf(self.stretcherWidth/2.0));
+			else
+				intersectPoint1 = CGPointMake(CGRectGetMidX(localOriginalFrame) - r * sinf(self.stretcherWidth/2.0),
+											  CGRectGetMidY(localOriginalFrame) + r * cosf(self.stretcherWidth/2.0));
+				
+			// Calculate second point
+			CGPoint intersectPoint2 = CGPointMake(intersectPoint1.x + 2 * r * sinf(self.stretcherWidth/2.0),
+												  intersectPoint1.y);
+			
+			// Add line to first intersect point
+			CGContextAddLineToPoint(context, intersectPoint1.x, intersectPoint1.y);
+			CGContextAddLineToPoint(context, intersectPoint2.x, intersectPoint2.y); // TEMP: replace this with an arc
+			
+//			CGContextAddArcToPoint(context, intersectPoint1.x, intersectPoint1.y, intersectPoint2.x, intersectPoint2.y, localOriginalFrame.size.width / 2.0);
+			// Add arc to second intersect point
+/*			if (localTouchPoint.y < CGRectGetMinY(localOriginalFrame))
+				CGContextAddArc(context, CGRectGetMidX(localOriginalFrame), CGRectGetMidY(localOriginalFrame),localOriginalFrame.size.width / 2.0, M_PI_4 + self.stretcherWidth / 2.0, M_PI_4 - self.stretcherWidth / 2.0, 1);
+			else
+				CGContextAddArc(context, CGRectGetMidX(localOriginalFrame), CGRectGetMidY(localOriginalFrame),localOriginalFrame.size.width / 2.0, - (M_PI_4 + self.stretcherWidth / 2.0), - (M_PI_4 - self.stretcherWidth / 2.0), 0);*/
+			
+			// Add line back to tip
+			CGContextAddLineToPoint(context, tip.x, tip.y);
+			
+			// Draw path
+			CGContextDrawPath(context, kCGPathStroke);
+		}
 		
 		UIGraphicsPopContext();
 	}

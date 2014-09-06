@@ -463,6 +463,7 @@
 				46FBA57319B382CC008C8BA5 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		46FBA57419B382CC008C8BA5 /* Build configuration list for PBXNativeTarget "LVSNumberStretcherTests" */ = {
 			isa = XCConfigurationList;
@@ -471,6 +472,7 @@
 				46FBA57619B382CC008C8BA5 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

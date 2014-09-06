@@ -19,6 +19,8 @@
 	<dict>
 		<key>6733D265-A14A-4101-A570-6AD1106636DA</key>
 		<string>../..</string>
+		<key>81019940-A00E-47F1-8775-E8819CA56D09</key>
+		<string>../../../LVSMath</string>
 	</dict>
 	<key>IDESourceControlProjectURL</key>
 	<string>https://github.com/LarrySnyder/LVSNumberStretcher.git</string>
@@ -28,6 +30,14 @@
 	<string>6733D265-A14A-4101-A570-6AD1106636DA</string>
 	<key>IDESourceControlProjectWCConfigurations</key>
 	<array>
+		<dict>
+			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
+			<string>public.vcs.git</string>
+			<key>IDESourceControlWCCIdentifierKey</key>
+			<string>81019940-A00E-47F1-8775-E8819CA56D09</string>
+			<key>IDESourceControlWCCName</key>
+			<string>LVSMath</string>
+		</dict>
 		<dict>
 			<key>IDESourceControlRepositoryExtensionIdentifierKey</key>
 			<string>public.vcs.git</string>
