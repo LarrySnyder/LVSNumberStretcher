@@ -15,8 +15,8 @@
 @implementation LVSNumberStretcher
 {
 //	LVSStretchGestureRecognizer *_stretchRecognizer;
-	UIPanGestureRecognizer *_panRecognizer;
-	UITapGestureRecognizer *_doubleTapRecognizer;
+//	UIPanGestureRecognizer *_panRecognizer;
+//	UITapGestureRecognizer *_doubleTapRecognizer;
 //	UITextField *_textField;
 	BOOL _incrementing;
 	CGFloat _currentIncrementSpeed;		// increments per second (+ = increasing, - = decreasing)
@@ -58,6 +58,7 @@
 		self.numDigits = 1;
 		self.stretcherWidth = M_PI / 4.0;
 		self.lineWidth = 1.0;
+		self.usePanGesture = YES;
 		self.maximumDistance = 150.0;
 		self.minimumIncrementSpeed = 1.0;
 		self.maximumIncrementSpeed = 10.0;
@@ -72,25 +73,19 @@
 		_editing = NO;
 		
 		// Appearance
-		self.backgroundColor = [UIColor clearColor];
+		self.backgroundColor = [UIColor lightGrayColor];
 		_textField.textColor = [UIColor blueColor];
-		_textField.backgroundColor = [UIColor clearColor];
+		_textField.backgroundColor = [UIColor whiteColor];
 		_originalFrame = self.frame;
 								
-		// Pan gesture recognizer
-		_panRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handleStretch:)];
-		_panRecognizer.minimumNumberOfTouches = 1;
-		_panRecognizer.maximumNumberOfTouches = 1;
-		[self addGestureRecognizer:_panRecognizer];
-		
 		// Double-tap recognizer
 		// basically uses the method here: http://stackoverflow.com/questions/20420784/double-tap-uitextview
-		_doubleTapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleDoubleTap:)];
-		_doubleTapRecognizer.numberOfTapsRequired = 2;
-		_doubleTapRecognizer.numberOfTouchesRequired = 1;
-		_doubleTapRecognizer.delaysTouchesBegan = YES;
-		_doubleTapRecognizer.delegate = self;
-		[self addGestureRecognizer:_doubleTapRecognizer];
+		UITapGestureRecognizer *doubleTapRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(handleDoubleTap:)];
+		doubleTapRecognizer.numberOfTapsRequired = 2;
+		doubleTapRecognizer.numberOfTouchesRequired = 1;
+//		doubleTapRecognizer.delaysTouchesBegan = YES;
+		doubleTapRecognizer.delegate = self;
+		[self addGestureRecognizer:doubleTapRecognizer];
 	}
     return self;
 }
@@ -118,9 +113,54 @@
 	[self setValue:value animated:NO];
 }
 
-#pragma mark - Stretching
+- (void)setUsePanGesture:(BOOL)panGestureStretches
+{
+	_usePanGesture = panGestureStretches;
+	
+	if (_usePanGesture)
+	{
+		// Remove long-press gesture recognizer, if any
+		for (UIGestureRecognizer *gesture in self.gestureRecognizers)
+			if ([gesture isMemberOfClass:[UILongPressGestureRecognizer class]])
+				[self removeGestureRecognizer:gesture];
 
-- (void)handleStretch:(UIPanGestureRecognizer *)gesture
+		// Set up pan gesture recognizer
+		UIPanGestureRecognizer *panRecognizer = [[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(handleStretch:)];
+		panRecognizer.minimumNumberOfTouches = 1;
+		panRecognizer.maximumNumberOfTouches = 1;
+		[self addGestureRecognizer:panRecognizer];
+	}
+	else
+	{
+		// Remove pan gesture recognizer, if any
+		for (UIGestureRecognizer *gesture in self.gestureRecognizers)
+			if ([gesture isMemberOfClass:[UIPanGestureRecognizer class]])
+				[self removeGestureRecognizer:gesture];
+		
+		// Set up long-press gesture recognizer
+		UILongPressGestureRecognizer *longPressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(handlePress:)];
+		longPressRecognizer.numberOfTapsRequired = 0;
+		longPressRecognizer.numberOfTouchesRequired = 1;
+		longPressRecognizer.delegate = self;
+		[self addGestureRecognizer:longPressRecognizer];
+	}
+}
+
+#pragma mark - Gesture Handling
+
+/*- (void)handlePan:(UIPanGestureRecognizer *)gesture
+{
+	// Pass gesture recognizer to handleStretch:
+	[self handleStretch:gesture];
+}*/
+
+- (void)handlePress:(UILongPressGestureRecognizer *)gesture
+{
+	// Pass gesture recognizer to handleStretch:
+	[self handleStretch:gesture];
+}
+
+- (void)handleStretch:(UIGestureRecognizer *)gesture
 {
 	if ((gesture.state == UIGestureRecognizerStateBegan) ||
 		(gesture.state == UIGestureRecognizerStateChanged))
@@ -249,11 +289,6 @@
 		// Convert _originalFrame to own coordinates (it's currently in superview's coordinates)
 		// and make slightly smaller to avoid ellipse being squished at edges
 		CGRect localOriginalFrame = [self convertRect:_originalFrame fromView:self.superview];
-		CGRect slightlySmallerRect = CGRectInset(localOriginalFrame, self.lineWidth/2.0, self.lineWidth/2.0);
-	
-		// Draw ellipse
-		CGContextAddEllipseInRect(context, slightlySmallerRect);
-		CGContextDrawPath(context, kCGPathStroke);
 		
 		// Convert _touchPoint to own coordinates (it's currently in superview's coordinates)
 		CGPoint localTouchPoint = [self convertPoint:_touchPoint fromView:self.superview];
@@ -306,18 +341,24 @@
 			// Template: (2.3, 0.4) (0.5, 1.3) (0.3, 3.7) (0.0, 8.0)
 			xScale = (intersectPoint2.x - CGRectGetMidX(localOriginalFrame)) / (2.3 - 0.0);
 			yScale = (tip.y - intersectPoint2.y) / (8.0 - 0.4);
-			controlPoint1 = CGPointMake(xScale * (0.5 - 2.3) + intersectPoint2.x,
+			controlPoint1 = CGPointMake(xScale * (0.3 - 2.3) + intersectPoint2.x,
+										yScale * (3.7 - 0.4) + intersectPoint2.y);
+			controlPoint2 = CGPointMake(xScale * (0.5 - 2.3) + intersectPoint2.x,
 												yScale * (1.3 - 0.4) + intersectPoint2.y);
-			controlPoint2 = CGPointMake(xScale * (0.3 - 2.3) + intersectPoint2.x,
-												yScale * (3.7 - 0.4) + intersectPoint2.y);
 			
 			// Add second Bezier curve for stretcher
-			CGContextMoveToPoint(context, intersectPoint2.x, intersectPoint2.y);
-			CGContextAddCurveToPoint(context, controlPoint1.x, controlPoint1.y, controlPoint2.x, controlPoint2.y, tip.x, tip.y);
+//			CGContextMoveToPoint(context, intersectPoint2.x, intersectPoint2.y);
+			CGContextAddCurveToPoint(context, controlPoint1.x, controlPoint1.y, controlPoint2.x, controlPoint2.y, intersectPoint2.x, intersectPoint2.y);
 			
 			// Draw path
-			CGContextDrawPath(context, kCGPathStroke);
+			CGContextClosePath(context);
+			CGContextFillPath(context);
 		}
+		
+		// Draw ellipse
+		CGRect slightlySmallerRect = CGRectInset(localOriginalFrame, self.lineWidth/2.0, self.lineWidth/2.0);
+		CGContextAddEllipseInRect(context, slightlySmallerRect);
+		CGContextDrawPath(context, kCGPathStroke);
 		
 		UIGraphicsPopContext();
 	}
@@ -395,6 +436,16 @@
 
 - (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer
 {
+	return YES;
+}
+
+- (BOOL)gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch
+{
+	// Without this, long-press recognizer doesn't fire if press occurs on text field.
+	// TODO: Is this safe?
+	// Might this be returning YES for other events, when it should be returning NO?
+	// How can I get the "default" value of gestureRecognizer:shouldReceiveTouch: if this is not the
+	// long-press recognizer?
 	return YES;
 }
 

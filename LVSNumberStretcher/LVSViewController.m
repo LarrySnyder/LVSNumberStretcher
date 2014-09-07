@@ -41,6 +41,7 @@
     numberStretcher3.minimumIncrementSpeed = 3;
     numberStretcher3.maximumIncrementSpeed = 20;
     numberStretcher3.increment = 0.1;
+    numberStretcher3.usePanGesture = NO;
     [self.view addSubview:numberStretcher3];
     
 }

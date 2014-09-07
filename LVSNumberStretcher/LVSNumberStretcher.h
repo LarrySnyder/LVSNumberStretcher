@@ -69,6 +69,12 @@
 #pragma mark - Behavior
 
 /*
+ Whether to stretch in response to pan (usePanGesture = YES) or long-press and movement
+ (usePanGesture = NO). Defaults to YES
+ */
+@property (nonatomic, assign) BOOL usePanGesture;
+
+/*
  Maximum distance -- if stretcher is stretched past this distance, 
  value will increment at maximumIncrementSpeed (measured in points).
  Defaults to 150
