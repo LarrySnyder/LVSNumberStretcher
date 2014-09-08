@@ -30,10 +30,13 @@
     self.numberStretcherPlaceholder.backgroundColor = [UIColor clearColor];*/
     
     
-    LVSNumberStretcher *numberStretcher1 = [[LVSNumberStretcher alloc] initWithFrame:CGRectMake(150, 200, 60, 30)];
+    LVSNumberStretcher *numberStretcher1 = [[LVSNumberStretcher alloc] initWithFrame:CGRectMake(150, 200, 40, 30)];
+    numberStretcher1.minimumValue = 0.0;
+    numberStretcher1.maximumValue = 8.5;
     [self.view addSubview:numberStretcher1];
 
     LVSNumberStretcher *numberStretcher2 = [[LVSNumberStretcher alloc] initWithFrame:CGRectMake(150, 300, 30, 60)];
+    numberStretcher2.circleFrame = CGRectInset(numberStretcher2.frame, -10, -10);
     [self.view addSubview:numberStretcher2];
     
     LVSNumberStretcher *numberStretcher3 = [[LVSNumberStretcher alloc] initWithFrame:CGRectMake(50, 200, 50, 50)];
@@ -42,6 +45,7 @@
     numberStretcher3.maximumIncrementSpeed = 20;
     numberStretcher3.increment = 0.1;
     numberStretcher3.usePanGesture = NO;
+    numberStretcher3.circleFillColor = [UIColor lightGrayColor];
     [self.view addSubview:numberStretcher3];
     
 }

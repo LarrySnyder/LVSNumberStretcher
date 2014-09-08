@@ -50,10 +50,16 @@
 
 #pragma mark - Appearance
 
-/* 
+/*
  Number of digits to display after decimal. Defaults to 1
  */
 @property (nonatomic, assign) int numDigits;
+
+/*
+ Frame in which to draw circular part of stretcher. Set to CGRectZero to use
+ smallest square that contains self.frame. Defaults to CGRectZero
+ */
+@property (nonatomic, assign) CGRect circleFrame;
 
 /*
  Angular width (in radians) of stretcher, where it intersects circle around text field.
@@ -62,9 +68,35 @@
 @property (nonatomic, assign) CGFloat stretcherWidth;
 
 /*
- Line width for stretcher. Defaults to 1.0
+ Line width for circular part of stretcher. Defaults to 1.0
  */
-@property (nonatomic, assign) CGFloat lineWidth;
+@property (nonatomic, assign) CGFloat circleLineWidth;
+
+/*
+ Line color for circular part of stretcher. Defaults to black
+ */
+@property (nonatomic, strong) UIColor *circleLineColor;
+
+/*
+ Fill color for circular part of stretcher. Defaults to white
+ */
+@property (nonatomic, strong) UIColor *circleFillColor;
+
+/*
+ Line width for pointer part of stretcher. Defaults to 1.0
+ */
+@property (nonatomic, assign) CGFloat stretcherLineWidth;
+
+/*
+ Line color for pointer part of stretcher. Defaults to black
+ */
+@property (nonatomic, strong) UIColor *stretcherLineColor;
+
+/*
+ Fill color for pointer part of stretcher. Defaults to black
+ */
+@property (nonatomic, strong) UIColor *stretcherFillColor;
+
 
 #pragma mark - Behavior
 
